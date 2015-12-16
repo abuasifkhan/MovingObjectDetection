@@ -24,6 +24,16 @@ Mat cv::KalmanFilter::statePost
 Mat cv::KalmanFilter::statePre
     predicted state (x'(k)): x(k)=A*x(k-1)+B*u(k)
 
+
+The Filter
+-   "http://www.marcad.com/cs584/Tracking.html"
+-   "http://www.morethantechnical.com/2011/06/17/simple-kalman-filter-for-tracking-using-opencv-2-2-w-code/"
+-   "So I wanted to do a 2D tracker that is more immune to noise.
+    For that I set up a Kalman filter with 4 dynamic parameters
+    and 2 measurement parameters (no control), where my measurement
+    is: 2D location of object, and dynamic is: 2D location and 2D
+    velocity. Pretty simple, and it makes the transition matrix also
+    simple."
 */
 
 #define drawCross( center, color, d )                                 \
@@ -44,13 +54,18 @@ int main( ) {
     Mat_<float> measurement(2,1);
     measurement.setTo(Scalar(0));
 
-    //    KF.statePre.at<float>(0) = mousePos.x;
-    //    KF.statePre.at<float>(1) = mousePos.y;
+    // KF.statePre.at() er jaygay KF.statePost.at() hobe because
+    // Kalman.predict() calculates statePre = TransitionMatrix * statePost
+        KF.statePost.at<float>(0) = mousePos.x;
+        KF.statePost.at<float>(1) = mousePos.y;
     //    KF.statePre.at<float>(2) = 0;
     //    KF.statePre.at<float>(3) = 0;
     setIdentity(KF.measurementMatrix);  // measurement matrix
-    setIdentity(KF.processNoiseCov, Scalar::all(1e-4)); // process noise covariance matrix
+    setIdentity(KF.processNoiseCov, Scalar::all(1e-3));  // process noise covariance matrix
+                                                         // Noise Factor. The more factor, the more closer.
     setIdentity(KF.measurementNoiseCov, Scalar::all(10)); // measurement noise covariance matrix
+                                                         // all(5) measurement factor.
+                                                         // The lesser the factor the closer prediction
     setIdentity(KF.errorCovPost, Scalar::all(.1));
     // Image to show mouse tracking
     Mat img(600, 800, CV_8UC3);
@@ -61,7 +76,7 @@ int main( ) {
     while(1) {
         // First predict, to update the internal statePre variable
         Mat prediction = KF.predict(); // predict korar jonno
-        // cout<<prediction.at<float>(0)<<" "<<prediction.at<float>(1)<<endl;
+
         Point predictPt(prediction.at<float>(0),prediction.at<float>(1));  // predicted point to float point
 
         // Get mouse point
